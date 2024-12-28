@@ -1,0 +1,106 @@
+﻿@page "/calcular"
+@using Consolide.LOVF.SuperDigito.Data
+@using Consolide.LOVF.SuperDigito.Models
+
+@inject ApplicationDBContext applicationDBContext;
+@inject IJSRuntime iJSRuntime;
+
+<PageTitle>Cálcular</PageTitle>
+
+<div class="row mt-5">
+    <div class="col-md-2"></div>
+    <div class="col-md-4">
+        <input @bind="calculo.Number" class="form-control" placeholder="Número" />
+    </div>
+    <div class="col-md-2"></div>
+    <div class="col-md-4">
+        <input @bind="calculo.Result" class="form-control" placeholder="Resultado" />
+    </div>
+    <div class="col-md-2"></div>
+    <div class="col-md-12">
+        <button class="btn btn-primary" @onclick="Calcula">Calcular</button>
+    </div>
+    <div class="row">
+        <p>Historial</p>
+        @if (history == null){
+
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Resultado</th>
+                        <th>Fecha y Hora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var his in history){
+                        <tr>
+                            <td>@his.Number</td>
+                            <td>@his.Result</td>
+                            <td>@his.Date</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <button class="btn btn-primary" @onclick="BorrarHistorial">Borrar Historial</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Historial[]? history;
+    private Historial calculo = new Historial(); 
+
+    private void Calcula(){
+        int numero = calculo.Number;
+
+        var exists = applicationDBContext.Historial.Where(h => h.Number == numero).FirstOrDefault();
+
+        if (exists == null){
+            while (numero.ToString().Length > 1)
+            {
+                calculo.Result = SuperDigito(numero);
+                numero = calculo.Result;
+            }
+            calculo.Date = DateTime.Now;
+            applicationDBContext.Historial.Add(calculo);
+        }
+        else
+        {
+            exists.Date = DateTime.Now;
+            applicationDBContext.Historial.Update(exists);
+        }
+        history = applicationDBContext.Historial.ToArray();
+    }
+
+    private int SuperDigito(int numero)
+    {
+        int result = 0;
+        char[] numeros = numero.ToString().ToCharArray();
+        foreach (char n in numeros){
+            result += int.Parse(n.ToString());
+        }
+        return result;
+    }
+
+    protected override async Task OnInitializedAsync(){
+        await Task.Delay(500);
+
+        history = applicationDBContext.Historial.ToArray();
+    }
+
+    private async void BorrarHistorial(){
+        var total = applicationDBContext.Historial.ToArray();
+        foreach (var t in total){
+            applicationDBContext.Historial.Remove(t);
+        }
+        await iJSRuntime.InvokeVoidAsync("alert", "Registros eliminados correctamente.");
+    }
+}

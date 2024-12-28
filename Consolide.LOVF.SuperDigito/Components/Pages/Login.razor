@@ -1,0 +1,48 @@
+﻿@page "/"
+@using Consolide.LOVF.SuperDigito.Components.Layout
+@using Consolide.LOVF.SuperDigito.Data
+@using Consolide.LOVF.SuperDigito.Models
+@layout LoginLayout
+
+@inject ApplicationDBContext applicationDBContext;
+@inject NavigationManager navigationManager;
+@inject IJSRuntime iJSRuntime;
+
+<div class="row mt-5">
+    <div class="col-lg-4 offset-lg-4">
+        <div class="mb-3 text-center">
+            <h3>Súper Digito</h3>
+        </div>
+        <div class="mb-3">
+            <input @bind="user.Username" class="form-control" placeholder="Usuario" />
+        </div>
+        <div class="mb-3">
+            <input @bind="user.Password" class="form-control" placeholder="Contraseña" />
+        </div>
+        <div class="col-lg-6">
+            <button class="btn btn-primary" @onclick="Registrar">Registro</button>
+            <button class="btn btn-primary" @onclick="Loguearse">Entrar</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private User user = new User();
+
+    private void Registrar()
+    {
+        navigationManager.NavigateTo("/Registro");
+    }
+
+    private async void Loguearse(){
+        var login = applicationDBContext.User.Where(u => u.Username == user.Username && u.Password == user.Password).FirstOrDefault();        
+        if (login != null)
+        {
+            navigationManager.NavigateTo("/Home");
+        }
+        else
+        {
+            await iJSRuntime.InvokeVoidAsync("alert", "Usuario no registrado");
+        }
+    }
+}

@@ -1,0 +1,57 @@
+﻿@page "/Registro"
+@using Consolide.LOVF.SuperDigito.Components.Layout
+@using Consolide.LOVF.SuperDigito.Data
+@using Consolide.LOVF.SuperDigito.Models
+@layout LoginLayout
+
+@inject ApplicationDBContext applicationDBContext;
+@inject IJSRuntime iJSRuntime;
+@inject NavigationManager navigationManager;
+
+<div class="row mt-5">
+    <div class="col-lg-4 offset-lg-4">
+        <div class="mb-3 text-center">
+            <h2>Alta Usuario</h2>
+        </div>
+        <div class="mb-3">
+            <input @bind="user.Username" class="form-control" placeholder="Usuario" />
+        </div>
+        <div class="mb-3">
+            <input @bind="user.Password" class="form-control" placeholder="Contraseña" />
+        </div>
+        <div class="mb-3">
+            <input id="passwordConfirm" value="@passwordConfirm" class="form-control" placeholder="Contraseña" @onchange="PasswordConfirm" />
+        </div>
+        <div class="col-lg-6">
+            <button class="btn btn-primary" @onclick="Guardar">Guardar</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private User user = new User();
+    private string passwordConfirm;
+
+    private void PasswordConfirm(ChangeEventArgs changeEventArgs){
+        passwordConfirm = (string)changeEventArgs.Value;
+    }
+
+    private async void Guardar(){
+        if (!string.IsNullOrEmpty(user.Username) && !string.IsNullOrEmpty(user.Password) && !string.IsNullOrEmpty(passwordConfirm))
+        {
+            if (passwordConfirm == user.Password){
+                applicationDBContext.User.Add(user);
+                await iJSRuntime.InvokeVoidAsync("alert", "Usuario registrado correctamente.");
+                navigationManager.NavigateTo("/");
+            }
+            else
+            {
+                await iJSRuntime.InvokeVoidAsync("alert", "La confirmación de la contraseña no coincide, favor de verificar.");
+            }
+        }
+        else
+        {
+            await iJSRuntime.InvokeVoidAsync("alert", "Favor de ingresar usuario y contraseña.");
+        }
+    }
+}
